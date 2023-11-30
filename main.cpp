@@ -73,102 +73,74 @@ struct BST {
         }
     }
 
+    TreeNode *deleteKey(TreeNode *root, int key) {
+        if (root == nullptr) {
+            return root;
+        }
+
+        if (key < root->value) {
+            root->left = deleteKey(root->left, key);
+        } else if (key > root->value) {
+            root->right = deleteKey(root->right, key);
+        } else {
+            if (root->left == nullptr) {
+                TreeNode *temp = root->right;
+                delete root;
+                return temp;
+            } else if (root->right == nullptr) {
+                TreeNode *temp = root->left;
+                delete root;
+                return temp;
+            }
+
+            TreeNode *temp = findMin(root->right);
+            root->value = temp->value;
+            root->right = deleteKey(root->right, temp->value);
+        }
+
+        return root;
+    }
+
+    TreeNode *findMin(TreeNode *node) {
+        TreeNode *current = node;
+        while (current && current->left != nullptr) {
+            current = current->left;
+        }
+        return current;
+    }
+
     void searchRoot(TreeNode *root, TreeNode *previous) {
         if (root->left != nullptr) {
             searchRoot(root->left, root);
         }
-
-        if (root->subtreeSum == maximum) {
-            if (!flag) {
-                TreeNode *nodeRoot;
-                nodeRoot = root;
-                flag = true;
-                cout << nodeRoot->value << " is Root" << endl;
-                deleteRoot_right(nodeRoot, previous);
-            }
-        }
-
         if (root->right != nullptr) {
             searchRoot(root->right, root);
         }
-        if (root->left == nullptr && root->right == nullptr && !flag) {
-            cout << "Node with maximum subtree sum not found" << endl;
+
+        if (root->subtreeSum == maximum) {
+            if (!flag) {
+                flag = true;
+                cout << endl << root->value << " IS ROOT" << endl;
+                deleteRoot_right(root, previous);
+            }
         }
     }
 
     void deleteRoot_right(TreeNode *root, TreeNode *previous) {
-        if (root) {
-            // Если у удаляемого узла нет левого потомка, то заменяем корень на его правого потомка
-            if (root->left == nullptr) {
-                root = root->right;
-            }
-            // Если у удаляемого узла нет правого потомка, то заменяем корень на его левого потомка
-            if (root->right == nullptr) {
-                root = root->left;
-            }
-        }
-
-        // Если у удаляемого узла нет левого потомка и есть родительский узел, обновляем ссылку родителя на правого потомка
-        if (root->left == nullptr && previous != nullptr) {
-            if (previous->left == root) {
-                previous->left = root->right;
-            }
-            if (previous->right == root) {
-                previous->right = root->right;
-            }
-        }
-
-        // Если у удаляемого узла нет правого потомка и есть родительский узел, обновляем ссылку родителя на левого потомка
-        if (root->right == nullptr && previous != nullptr) {
-            if (previous->left == root) {
-                previous->left = root->left;
-            }
-            if (previous->right == root) {
-                previous->right = root->left;
-            }
-        }
-
-        // Если у удаляемого узла есть и левый, и правый потомок
-        if ((root->right != nullptr) && (root->left != nullptr)) {
-            TreeNode *tempNode = root->right;
-            TreeNode *tempPred = root;
-
-            // Находим самый левый узел в правом поддереве (наименьший элемент в правом поддереве)
-            while (true) {
-                if (tempNode->left != nullptr) {
-                    tempPred = tempNode;
-                    tempNode = tempNode->left;
-                } else {
-                    break;
-                }
-            }
-
-            // Заменяем значение удаляемого узла на значение найденного узла
-            root->value = tempNode->value;
-
-            // Обновляем ссылку родительского узла на правого потомка найденного узла
-            if (tempNode->right != nullptr) {
-                if (tempPred != root) {
-                    tempPred->left = tempNode->right;
-                } else {
-                    tempPred->right = tempNode->right;
-                }
-            } else {
-                // Если у найденного узла нет правого потомка, убираем ссылку на него у его родителя
-                if (tempPred != root) {
-                    tempPred->left = nullptr;
-                } else {
-                    tempPred->right = nullptr;
-                }
-            }
+        if (root == this->root) {
+            this->root = deleteKey(root, root->value);
+        } else if (previous->right == root) {
+            previous->right = deleteKey(root, root->value);
+        } else {
+            previous->left = deleteKey(root, root->value);
         }
     }
 
-    void preOrderTravesal(TreeNode *root) {
+    void preOrderTraversal(TreeNode *root) {
         if (root != nullptr) {
             out << root->value << "\n";
-            preOrderTravesal(root->left);
-            preOrderTravesal(root->right);
+            preOrderTraversal(root->left);
+            preOrderTraversal(root->right);
         }
     }
 };
@@ -193,8 +165,8 @@ int main() {
 
     printHeights(tree.root);
 
-    tree.searchRoot(tree.root, nullptr); // Поиск и удаление корня полупути
-    tree.preOrderTravesal(tree.root);
+    tree.searchRoot(tree.root, nullptr); // Search for and delete the root of the semi-path
+    tree.preOrderTraversal(tree.root);
 
     return 0;
 }
