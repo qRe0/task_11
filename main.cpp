@@ -39,9 +39,6 @@ struct BST {
                 tmp = tmp->left;
             } else if (key > tmp->value) {
                 tmp = tmp->right;
-            } else {
-                // Key already exists in tree
-                return;
             }
         }
 
@@ -109,23 +106,6 @@ struct BST {
         return current;
     }
 
-    void searchRoot(TreeNode *root, TreeNode *previous) {
-        if (root->left != nullptr) {
-            searchRoot(root->left, root);
-        }
-        if (root->right != nullptr) {
-            searchRoot(root->right, root);
-        }
-
-        if (root->subtreeSum == maximum) {
-            if (!flag) {
-                flag = true;
-                cout << endl << root->value << " IS ROOT" << endl;
-                deleteRoot_right(root, previous);
-            }
-        }
-    }
-
     void deleteRoot_right(TreeNode *root, TreeNode *previous) {
         if (root == this->root) {
             this->root = deleteKey(root, root->value);
@@ -133,6 +113,57 @@ struct BST {
             previous->right = deleteKey(root, root->value);
         } else {
             previous->left = deleteKey(root, root->value);
+        }
+    }
+
+    void deleteSemiPathRoot(TreeNode *root) {
+        int maxHeight = -1;
+        int minimumKey = INT_MAX;
+
+        TreeNode *semiPathRoot = nullptr;
+
+        function<void(TreeNode *)> findSemiPathRoot = [&](TreeNode *node) {
+            if (node == nullptr)
+                return;
+
+            int currentSum = 0;
+            if (node->left)
+                currentSum += node->left->height;
+            if (node->right)
+                currentSum += node->right->height;
+
+            if (currentSum > maxHeight || (currentSum == maxHeight && node->value < minimumKey)) {
+                maxHeight = currentSum;
+                minimumKey = node->value;
+                semiPathRoot = node;
+            }
+
+            findSemiPathRoot(node->left);
+            findSemiPathRoot(node->right);
+        };
+
+        findSemiPathRoot(root);
+
+        if (semiPathRoot) {
+            TreeNode *parent = nullptr;
+            TreeNode *current = root;
+
+            while (current != semiPathRoot) {
+                parent = current;
+                if (semiPathRoot->value < current->value)
+                    current = current->left;
+                else
+                    current = current->right;
+            }
+
+            if (parent) {
+                if (semiPathRoot->value < parent->value)
+                    deleteRoot_right(semiPathRoot, parent);
+                else
+                    deleteRoot_right(semiPathRoot, parent);
+            } else {
+                deleteRoot_right(semiPathRoot, nullptr);
+            }
         }
     }
 
@@ -165,7 +196,7 @@ int main() {
 
     printHeights(tree.root);
 
-    tree.searchRoot(tree.root, nullptr); // Search for and delete the root of the semi-path
+    tree.deleteSemiPathRoot(tree.root);
     tree.preOrderTraversal(tree.root);
 
     return 0;
